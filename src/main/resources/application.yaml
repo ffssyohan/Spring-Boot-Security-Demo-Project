@@ -10,3 +10,6 @@ spring:
       enabled: true
   datasource:
     url: jdbc:h2:mem:test
+  app:
+    jwtSecret: mySecretKey123!#912738
+    jwtExpirationMs: 300000000000000000000000000000
