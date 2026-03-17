@@ -3,6 +3,7 @@ package com.example.securityDemo;
 import com.example.securityDemo.jwt.AuthEntryPointJwt;
 import com.example.securityDemo.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,16 +39,16 @@ public class SecurityConfig {
     private AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
-    private AuthTokenFilter authenticationJwtTokenFilter() {
+    AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
     }
 
     @Bean
-    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) {
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception{
         http.authorizeHttpRequests((requests) -> requests
                 .requestMatchers("/h2-console/**")
                 .permitAll()
-                .requestMatchers("/apu/signin")
+                .requestMatchers("/signin")
                 .permitAll()
                 .anyRequest()
                 .authenticated());
@@ -60,31 +61,41 @@ public class SecurityConfig {
                 exception.authenticationEntryPoint(unauthorizedHandler)
         );
         http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.csrf(csrf -> csrf.disable());
+        http.addFilterBefore(authenticationJwtTokenFilter(),UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
+
     @Bean
     public UserDetailsService userDetailsService(){
+        return new JdbcUserDetailsManager(dataSource);
+    }
 
-        UserDetails user1 = User.withUsername("user1")
-                .password(passwordEncoder().encode("123"))
-                .roles("USER")
-                .build();
+    @Bean
+    public CommandLineRunner initData(UserDetailsService userDetailsService){
+        return args -> {
 
-        UserDetails admin = User.withUsername("admin")
-                .password(passwordEncoder().encode("123"))
-                .roles("ADMIN")
-                .build();
+            JdbcUserDetailsManager manager = (JdbcUserDetailsManager) userDetailsService;
 
-        JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
-        userDetailsManager.createUser(user1);
-        userDetailsManager.createUser(admin);
+                UserDetails user1 = User.withUsername("user1")
+                        .password(passwordEncoder().encode("123"))
+                        .roles("USER")
+                        .build();
 
-        return userDetailsManager;
+                UserDetails admin = User.withUsername("admin")
+                        .password(passwordEncoder().encode("123"))
+                        .roles("ADMIN")
+                        .build();
+
+                JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
+                userDetailsManager.createUser(user1);
+                userDetailsManager.createUser(admin);
+
 
 //        return new InMemoryUserDetailsManager(user1, admin);
+
+        };
     }
 
     @Bean

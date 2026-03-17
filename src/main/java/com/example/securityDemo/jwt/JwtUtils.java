@@ -17,13 +17,15 @@ import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
+@Component
 public class JwtUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
-    @Value("${spring.app.jwtExpirationMs}")
-    private int jwtExpirationMs;
-    @Value("${spring.app.jwtSecret}")
+    @Value("${app.jwtSecret}")
     private String jwtSecret;
+
+    @Value("${app.jwtExpirationMs}")
+    private int jwtExpirationMs;
 
     // getting JWT from header
     public String getJwtFromHeader(HttpServletRequest request){
